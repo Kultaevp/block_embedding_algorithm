@@ -11,8 +11,8 @@ def send_message(wavelet, enclosure, width, height):
     изображение. Выполняется прямое преобразование, всттраивание
     и обратное преобразование
     '''
-    wavelet.fwt97_2d(1, width, photo_height)
-    stego.embedding(channel, enclosure, width, height)
+    wavelet.fwt97_2d(1, width, height)
+    wavelet.pixels = stego.embedding(channel, enclosure, width, height)
     wavelet.iwt97_2d(1, width, height)
     return wavelet.pixels
 

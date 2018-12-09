@@ -54,6 +54,7 @@ def embedding(picture, enclosure, width, height):
                 break
         if count == len(enclosure):
             break
+    return picture
 
 
 # Функция извлечения

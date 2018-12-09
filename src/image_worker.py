@@ -29,3 +29,4 @@ def save_picture(picture, width, height, photo):
             red = int(picture[i][j])
             photo.putpixel((j, i), (red, red, red))
     return photo
+
