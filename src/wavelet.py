@@ -3,15 +3,13 @@ import copy
 from consts import COEFFICIENT_PACKAGE, COEFFICIENT_UN_PACKAGE
 
 
-'''
-В классе 4 метода: первые два для одномерного
-и двухмерного прямого вейвлет-преобразования.
-Вторые два для одномерного и двумерного обратного
-вейвлет-преобразования
-'''
-
-
 def sort_pixels(pixels, width, height):
+    '''
+    Сортировка пикселей по областям высоких
+    и низких частот после проведения вейвлет-преобразования.
+    На вход изображение после преобразования, на выходе
+    отсортированное изображение
+    '''
     k1 = COEFFICIENT_PACKAGE['k1']
     k2 = COEFFICIENT_PACKAGE['k2']
     temp_bank = copy.deepcopy(pixels)
@@ -30,6 +28,11 @@ def sort_pixels(pixels, width, height):
 
 
 def inverse_sort_pixels(pixels, width, height):
+    '''
+    Обратная сортировка для проведения обратного
+    вейвлет-преобразования. На входе отсортированное
+    изображение, на выходе неотсортированное изображение
+    '''
     k1 = COEFFICIENT_UN_PACKAGE['k1']
     k2 = COEFFICIENT_UN_PACKAGE['k2']
     temp_bank = copy.deepcopy(pixels)
@@ -52,6 +55,11 @@ class CDF:
         self.pixels = input_picture
 
     def __transformation_pixels(self, coef, start_point, finish_point, col):
+        '''
+        Один круг вейвлет преобразования.
+        Всего кругов 4, для каждого из коэффициентов
+        из JPEG2000 (alpha, beta, gamma, delta).
+        '''
         for row in range(start_point, finish_point, 2):
             previous_px = self.pixels[row - 1][col]
             next_px = self.pixels[row + 1][col]
@@ -59,6 +67,12 @@ class CDF:
             self.pixels[row][col] += transf_px
 
     def fwt97(self, width, height):
+        '''
+        Прямое вейвлет-преобразование для одномерного
+        изображения (строки пикселей). На вход
+        исходное изображение, на выходе изображение,
+        разделенное на области различных частот
+        '''
         alpha = COEFFICIENT_PACKAGE['alpha']
         beta = COEFFICIENT_PACKAGE['beta']
         gamma = COEFFICIENT_PACKAGE['gamma']
@@ -78,6 +92,12 @@ class CDF:
         return sort_pixels(self.pixels, width, height)
 
     def fwt97_2d(self, num_of_levels, width, height):
+        '''
+        Прямое вейлет преобразование для двумерного
+        изображения. num_of_levels - количество
+        кругов преобразования. Одним кругом является
+        проведения преобразования и сортировки
+        '''
         wave = CDF(self.pixels)
         for i in range(num_of_levels):
             self.pixels = wave.fwt97(width, height)
@@ -86,6 +106,10 @@ class CDF:
             height /= 2
 
     def iwt97(self, width, height):
+        '''
+        Обратное вейвлет-преобразование
+        для одномерного изображения
+        '''
         alpha = COEFFICIENT_UN_PACKAGE['alpha']
         beta = COEFFICIENT_UN_PACKAGE['beta']
         gamma = COEFFICIENT_UN_PACKAGE['gamma']
@@ -106,6 +130,10 @@ class CDF:
         return self.pixels
 
     def iwt97_2d(self, num_of_levels, width, height):
+        '''
+        Обратное вейвлет-преобразование
+        для двумерного изображения
+        '''
         wave = CDF(self.pixels)
         for i in range(num_of_levels-1):
             height /= 2
@@ -115,13 +143,3 @@ class CDF:
             self.pixels = wave.iwt97(width, height)
             width *= 2
             height *= 2
-
-
-
-
-
-
-
-
-
-

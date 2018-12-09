@@ -12,9 +12,7 @@ COEFFICIENT_UN_PACKAGE = {'alpha': 1.586134342,
                           'delta': -0.4435068522,
                           'k1': 1.230174104914,
                           'k2': 1.6257861322319229}
-
+# Константы для встраивания
 BLOCK_HEIGHT = 4
 BLOCK_WIDTH = 1
 QUANT_SIZE = 60
-
-
