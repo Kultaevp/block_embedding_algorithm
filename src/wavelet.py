@@ -127,7 +127,6 @@ class CDF:
             CDF.__transformation_pixels(self, alpha, 1, height-1, col)
             new_value = 2 * alpha * self.pixels[height-2][col]
             self.pixels[height-1][col] += new_value
-        return self.pixels
 
     def iwt97_2d(self, num_of_levels, width, height):
         '''
@@ -139,7 +138,7 @@ class CDF:
             height /= 2
             width /= 2
         for i in range(num_of_levels):
-            self.pixels = wave.iwt97(width, height)
-            self.pixels = wave.iwt97(width, height)
+            wave.iwt97(width, height)
+            wave.iwt97(width, height)
             width *= 2
             height *= 2
