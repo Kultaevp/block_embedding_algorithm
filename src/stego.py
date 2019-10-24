@@ -3,7 +3,6 @@ import PSNR
 import functools
 from src import Automata
 from src import wavelet
-import time
 
 quant = consts.QUANT_SIZE
 
@@ -35,32 +34,32 @@ def get_coefficients(block_sum):
 
 
 @functools.lru_cache(maxsize=None)
-def energy_distribution(start_picture, embedded_picture,
+def energy_distribution(start_block, embedded_block,
                         probability_a, probability_b, probability_change):
     cache = list()
     while True:
-        start_transform = wavelet.CDF.iwt97(start_picture, 1, len(start_picture))
-        embedded_transform = wavelet.CDF.iwt97(embedded_picture, 1, len(embedded_picture))
+        start_transform = wavelet.CDF.iwt97(start_block, 1, len(start_block))
+        embedded_transform = wavelet.CDF.iwt97(embedded_block, 1, len(embedded_block))
         psnr_start = PSNR.psnr(start_transform, embedded_transform)
-        for i in range(embedded_picture):
+        for i in range(embedded_block):
             if probability_a > probability_b:
-                embedded_picture[i] = embedded_picture[i] - 1
+                embedded_block[i] = embedded_block[i] - 1
                 flag = i
-                for i in range(embedded_picture):
+                for i in range(embedded_block):
                     if flag != i:
-                        embedded_picture[i] = embedded_picture[i] + 1/len(embedded_picture)
+                        embedded_block[i] = embedded_block[i] + 1/len(embedded_block)
             else:
-                embedded_picture[i] = embedded_picture[i] + 1
+                embedded_block[i] = embedded_block[i] + 1
                 flag = i
-                for i in range(embedded_picture):
+                for i in range(embedded_block):
                     if flag != i:
-                        embedded_picture[i] = embedded_picture[i] - 1 / len(
-                            embedded_picture)
+                        embedded_block[i] = embedded_block[i] - 1 / len(
+                            embedded_block)
 
-            start_transform = wavelet.CDF.iwt97(start_picture, 1,
-                                                len(start_picture))
-            embedded_transform = wavelet.CDF.iwt97(embedded_picture, 1,
-                                                   len(embedded_picture))
+            start_transform = wavelet.CDF.iwt97(start_block, 1,
+                                                len(start_block))
+            embedded_transform = wavelet.CDF.iwt97(embedded_block, 1,
+                                                   len(embedded_block))
             psnr_finish = PSNR.psnr(start_transform, embedded_transform)
             if psnr_start < psnr_finish:
                 probability_a += probability_change
@@ -74,7 +73,7 @@ def energy_distribution(start_picture, embedded_picture,
         if len(cache) > 2:
             cache.remove(1)
         if all(psnr_finish == value for value in cache):
-            return embedded_picture
+            return embedded_block
 
 
 # Функция встраивания
@@ -85,7 +84,6 @@ def embedding(picture, enclosure, width, height, automata=None):
     в него информацией
     '''
     count = 0
-    start_picture = picture
     for i in range(0, int(width/2), consts.BLOCK_WIDTH):
         for j in range(int(height/2), height, consts.BLOCK_HEIGHT):
             block_sum = 0
@@ -100,8 +98,8 @@ def embedding(picture, enclosure, width, height, automata=None):
                 matrix_weight[o] *= cur_value
             for o in range(consts.BLOCK_HEIGHT):
                 try:
-                    distributed_block = energy_distribution(start_picture=start_picture,
-                                                        embedded_picture=picture,
+                    distributed_block = energy_distribution(start_block=picture,
+                                                        embedded_block=cur_value,
                                                         probability_a=consts.PROBABILITY_A,
                                                         probability_b=consts.PROBABILITY_B,
                                                         probability_change=consts.PROBABILITY_CNAHGE)
