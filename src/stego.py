@@ -1,4 +1,9 @@
 import consts
+import PSNR
+import functools
+from src import Automata
+from src import wavelet
+import time
 
 quant = consts.QUANT_SIZE
 
@@ -11,7 +16,10 @@ def get_matrix_weight(picture, i_width, i_height, block_sum):
     '''
     matrix_weight = list()
     for o in range(consts.BLOCK_HEIGHT):
-        matrix_weight.append(abs(picture[i_width][i_height + o]) / block_sum)
+        if block_sum == 0:
+            matrix_weight.append(abs(picture[i_width][i_height + o]) / 1)
+        else:
+            matrix_weight.append(abs(picture[i_width][i_height + o]) / block_sum)
     return matrix_weight
 
 
@@ -26,14 +34,58 @@ def get_coefficients(block_sum):
     return a0, a1
 
 
+@functools.lru_cache(maxsize=None)
+def energy_distribution(start_picture, embedded_picture,
+                        probability_a, probability_b, probability_change):
+    cache = list()
+    while True:
+        start_transform = wavelet.CDF.iwt97(start_picture, 1, len(start_picture))
+        embedded_transform = wavelet.CDF.iwt97(embedded_picture, 1, len(embedded_picture))
+        psnr_start = PSNR.psnr(start_transform, embedded_transform)
+        for i in range(embedded_picture):
+            if probability_a > probability_b:
+                embedded_picture[i] = embedded_picture[i] - 1
+                flag = i
+                for i in range(embedded_picture):
+                    if flag != i:
+                        embedded_picture[i] = embedded_picture[i] + 1/len(embedded_picture)
+            else:
+                embedded_picture[i] = embedded_picture[i] + 1
+                flag = i
+                for i in range(embedded_picture):
+                    if flag != i:
+                        embedded_picture[i] = embedded_picture[i] - 1 / len(
+                            embedded_picture)
+
+            start_transform = wavelet.CDF.iwt97(start_picture, 1,
+                                                len(start_picture))
+            embedded_transform = wavelet.CDF.iwt97(embedded_picture, 1,
+                                                   len(embedded_picture))
+            psnr_finish = PSNR.psnr(start_transform, embedded_transform)
+            if psnr_start < psnr_finish:
+                probability_a += probability_change
+                probability_b -= probability_change
+                psnr_start = psnr_finish
+            else:
+                probability_b += probability_change
+                probability_a -= probability_change
+                psnr_start = psnr_finish
+        cache.append(psnr_finish)
+        if len(cache) > 2:
+            cache.remove(1)
+        if all(psnr_finish == value for value in cache):
+            return embedded_picture
+
+
 # Функция встраивания
-def embedding(picture, enclosure, width, height):
+def embedding(picture, enclosure, width, height, automata=None):
     '''
     Функция встраивания. На входе изображение,
     вложение. На выходе изображение со встроенной
     в него информацией
     '''
     count = 0
+    start_picture = picture
     for i in range(0, int(width/2), consts.BLOCK_WIDTH):
         for j in range(int(height/2), height, consts.BLOCK_HEIGHT):
             block_sum = 0
@@ -47,6 +99,15 @@ def embedding(picture, enclosure, width, height):
             for o in range(consts.BLOCK_HEIGHT):
                 matrix_weight[o] *= cur_value
             for o in range(consts.BLOCK_HEIGHT):
+                try:
+                    distributed_block = energy_distribution(start_picture=start_picture,
+                                                        embedded_picture=picture,
+                                                        probability_a=consts.PROBABILITY_A,
+                                                        probability_b=consts.PROBABILITY_B,
+                                                        probability_change=consts.PROBABILITY_CNAHGE)
+                except TypeError:
+                    distributed_block = ''
+                Automata.embedding(distributed_block)
                 picture[i][j+o] = abs(picture[i][j+o]) + matrix_weight[o]
             matrix_weight.clear()
             count += 1

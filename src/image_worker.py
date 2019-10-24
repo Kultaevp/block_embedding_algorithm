@@ -1,3 +1,5 @@
+import time
+
 def get_channel(picture, width, height):
     '''
     Извлечение red канала изображения
@@ -9,6 +11,7 @@ def get_channel(picture, width, height):
     '''
     red_channel = list()
     buffer_channel = list()
+    time.sleep(2)
     for x in range(0, height):
         for y in range(0, width):
             channels = picture.getpixel((y, x))

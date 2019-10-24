@@ -1,4 +1,6 @@
 import copy
+import asyncio
+import time
 
 from consts import COEFFICIENT_PACKAGE, COEFFICIENT_UN_PACKAGE
 
@@ -12,6 +14,7 @@ def sort_pixels(pixels, width, height):
     '''
     k1 = COEFFICIENT_PACKAGE['k1']
     k2 = COEFFICIENT_PACKAGE['k2']
+    ioloop = asyncio.get_event_loop()
     temp_bank = copy.deepcopy(pixels)
 
     for row in range(height):
